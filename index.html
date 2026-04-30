@@ -1,81 +1,103 @@
-  <script>
-    const API_KEY = "fd425ec0c76fd15b63572c439ee65db7"; 
-    const BASE_URL = "https://api.themoviedb.org/3";
-    const IMG_URL = "https://image.tmdb.org/t/p/original";
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieTown | Netflix Clone</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --n-red: #E50914; --black: #000; --grey: #141414; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--black); color: white; font-family: 'Roboto', sans-serif; overflow-x: hidden; }
+        
+        /* Navbar */
+        .nav { position: fixed; top: 0; width: 100%; height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 4%; z-index: 2000; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); transition: 0.5s; }
+        .nav.black { background: #000; }
+        .logo { color: var(--n-red); font-family: 'Bebas Neue'; font-size: 35px; }
 
-    // Intro Animation Loader
-    setTimeout(() => {
-        document.getElementById('intro').style.display = 'none';
+        /* Hero Banner */
+        .hero { height: 80vh; background-size: cover; background-position: center; position: relative; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 4% 80px; }
+        .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, #000 5%, transparent 70%); }
+        .hero-title { font-size: 4rem; font-family: 'Bebas Neue'; z-index: 10; }
+
+        /* Rows */
+        .row { margin: 20px 0 20px 4%; }
+        .scroller { display: flex; overflow-x: auto; gap: 12px; padding: 10px 0; }
+        .scroller::-webkit-scrollbar { display: none; }
+        .movie-card { min-width: 160px; transition: 0.3s; cursor: pointer; }
+        .movie-card:hover { transform: scale(1.1); z-index: 10; }
+        .poster { width: 100%; border-radius: 4px; }
+
+        /* Modal */
+        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 5000; justify-content: center; align-items: center; }
+        .close { position: absolute; top: 20px; right: 30px; font-size: 40px; color: white; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="nav" class="nav"><div class="logo">MOVIETOWN</div></div>
+    <div id="hero" class="hero"><h1 id="hero-title" class="hero-title">Loading...</h1></div>
+    
+    <div class="row"><h2>Trending Now</h2><div id="trending-row" class="scroller"></div></div>
+    <div class="row"><h2>Top Rated</h2><div id="top-rated-row" class="scroller"></div></div>
+
+    <div id="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <iframe id="player" width="90%" height="80%" src="" frameborder="0" allowfullscreen></iframe>
+    </div>
+
+    <script>
+        // --- YAHAN APNI TMDB KEY DALO ---
+        const API_KEY = "fd425ec0c76fd15b63572c439ee65db7"; 
+        const BASE_URL = "https://api.themoviedb.org/3";
+        const IMG_URL = "https://image.tmdb.org/t/p/original";
+
+        async function initApp() {
+            try {
+                // Fetch Hero
+                const res = await fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}`);
+                const data = await res.json();
+                const movie = data.results[0];
+                document.getElementById('hero').style.backgroundImage = `url(${IMG_URL}${movie.backdrop_path})`;
+                document.getElementById('hero-title').innerText = movie.title;
+
+                // Fetch Rows
+                loadRow("trending-row", `${BASE_URL}/trending/movie/week?api_key=${API_KEY}`);
+                loadRow("top-rated-row", `${BASE_URL}/movie/top_rated?api_key=${API_KEY}`);
+            } catch (err) { console.error("Error:", err); }
+        }
+
+        async function loadRow(id, url) {
+            const res = await fetch(url);
+            const data = await res.json();
+            document.getElementById(id).innerHTML = data.results.map(m => `
+                <div class="movie-card" onclick="openTrailer(${m.id})">
+                    <img class="poster" src="${IMG_URL}${m.poster_path}">
+                </div>
+            `).join('');
+        }
+
+        async function openTrailer(id) {
+            const res = await fetch(`${BASE_URL}/movie/${id}/videos?api_key=${API_KEY}`);
+            const data = await res.json();
+            const trailer = data.results.find(v => v.type === 'Trailer');
+            if(trailer) {
+                document.getElementById('modal').style.display = 'flex';
+                document.getElementById('player').src = `https://www.youtube.com/embed/${trailer.key}?autoplay=1`;
+            } else { alert("Trailer available nahi hai."); }
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+            document.getElementById('player').src = "";
+        }
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 100) document.getElementById('nav').classList.add('black');
+            else document.getElementById('nav').classList.remove('black');
+        });
+
         initApp();
-    }, 3500);
-
-    async function initApp() {
-        try {
-            // Hero Banner Fetch
-            const resHero = await fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}`);
-            const dataHero = await resHero.json();
-            const movie = dataHero.results[Math.floor(Math.random() * 10)];
-            
-            document.getElementById('hero').style.backgroundImage = `url(${IMG_URL}${movie.backdrop_path})`;
-            document.getElementById('hero-title').innerText = movie.title;
-
-            // Rows Fetch
-            fetchRow("trending-row", `${BASE_URL}/trending/movie/week?api_key=${API_KEY}`);
-            fetchRow("top-rated-row", `${BASE_URL}/movie/top_rated?api_key=${API_KEY}`);
-            fetchRow("action-row", `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=28`);
-            
-            // Top 10 Ranking
-            fetchRanking();
-
-        } catch (error) {
-            console.error("Data load nahi ho raha:", error);
-        }
-    }
-
-    async function fetchRow(elementId, url) {
-        const res = await fetch(url);
-        const data = await res.json();
-        const container = document.getElementById(elementId);
-        container.innerHTML = data.results.map(m => `
-            <div class="movie-card" onclick="openTrailer(${m.id})">
-                <img class="poster" src="${IMG_URL}${m.poster_path}" alt="${m.title}">
-            </div>
-        `).join('');
-    }
-
-    async function fetchRanking() {
-        const res = await fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}`);
-        const data = await res.json();
-        const container = document.getElementById('ranking-row');
-        container.innerHTML = data.results.slice(0, 10).map((m, i) => `
-            <div class="rank-card" onclick="openTrailer(${m.id})">
-                <div class="rank-num">${i + 1}</div>
-                <img class="poster" style="width:130px" src="${IMG_URL}${m.poster_path}">
-            </div>
-        `).join('');
-    }
-
-    async function openTrailer(id) {
-        const res = await fetch(`${BASE_URL}/movie/${id}/videos?api_key=${API_KEY}`);
-        const data = await res.json();
-        const trailer = data.results.find(v => v.type === 'Trailer');
-        if(trailer) {
-            document.getElementById('modal').style.display = 'flex';
-            document.getElementById('player').src = `https://www.youtube.com/embed/${trailer.key}?autoplay=1`;
-        } else {
-            alert("Trailer nahi mila!");
-        }
-    }
-
-    function closeModal() {
-        document.getElementById('modal').style.display = 'none';
-        document.getElementById('player').src = "";
-    }
-
-    // Navbar scroll effect
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 100) document.getElementById('nav').classList.add('black');
-        else document.getElementById('nav').classList.remove('black');
-    });
-                </script>
-                
+    </script>
+</body>
+</html>
