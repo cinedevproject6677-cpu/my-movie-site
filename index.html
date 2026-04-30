@@ -9,62 +9,110 @@
         :root { --n-red: #E50914; --black: #000; --grey: #141414; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: var(--black); color: white; font-family: 'Roboto', sans-serif; overflow-x: hidden; }
-        
+
         /* Navbar */
         .nav { position: fixed; top: 0; width: 100%; height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 4%; z-index: 2000; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); transition: 0.5s; }
         .nav.black { background: #000; }
-        .logo { color: var(--n-red); font-family: 'Bebas Neue'; font-size: 35px; }
+        .logo { color: var(--n-red); font-family: 'Bebas Neue'; font-size: 35px; text-decoration: none; }
+        
+        .search-box { display: flex; align-items: center; background: rgba(0,0,0,0.5); border: 1px solid #fff; padding: 5px 10px; border-radius: 4px; }
+        #search-input { background: transparent; border: none; color: white; outline: none; width: 150px; font-size: 14px; }
 
-        /* Hero Banner */
-        .hero { height: 80vh; background-size: cover; background-position: center; position: relative; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 4% 80px; }
+        /* Hero */
+        .hero { height: 80vh; background-size: cover; background-position: center top; position: relative; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 4% 100px; }
         .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, #000 5%, transparent 70%); }
-        .hero-title { font-size: 4rem; font-family: 'Bebas Neue'; z-index: 10; }
+        .hero-title { font-size: 4rem; font-family: 'Bebas Neue'; z-index: 10; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
 
         /* Rows */
-        .row { margin: 20px 0 20px 4%; }
-        .scroller { display: flex; overflow-x: auto; gap: 12px; padding: 10px 0; }
+        .row { margin: 30px 0 30px 4%; }
+        .row-header { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+        .scroller { display: flex; overflow-x: auto; gap: 12px; padding: 10px 0; scroll-behavior: smooth; }
         .scroller::-webkit-scrollbar { display: none; }
-        .movie-card { min-width: 160px; transition: 0.3s; cursor: pointer; }
-        .movie-card:hover { transform: scale(1.1); z-index: 10; }
-        .poster { width: 100%; border-radius: 4px; }
+        
+        .movie-card { min-width: 160px; transition: 0.4s; cursor: pointer; position: relative; }
+        .movie-card:hover { transform: scale(1.1); z-index: 100; }
+        .poster { width: 100%; border-radius: 4px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+
+        /* Ranking Styles */
+        .rank-card { display: flex; align-items: center; min-width: 240px; cursor: pointer; transition: 0.3s; }
+        .rank-num { font-size: 120px; font-weight: 900; color: #000; -webkit-text-stroke: 3px #555; line-height: 1; margin-right: -20px; z-index: 1; font-family: 'Bebas Neue'; }
+        .rank-img { width: 130px; z-index: 2; border-radius: 4px; }
 
         /* Modal */
         #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 5000; justify-content: center; align-items: center; }
-        .close { position: absolute; top: 20px; right: 30px; font-size: 40px; color: white; cursor: pointer; }
+        .modal-content { width: 90%; max-width: 900px; height: 70vh; position: relative; }
+        .close { position: absolute; top: -45px; right: 0; font-size: 40px; color: white; cursor: pointer; }
+
+        /* Search Results View */
+        #search-view { display: none; padding: 100px 4% 20px; min-height: 100vh; background: #000; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; }
     </style>
 </head>
 <body>
 
-    <div id="nav" class="nav"><div class="logo">MOVIETOWN</div></div>
-    <div id="hero" class="hero"><h1 id="hero-title" class="hero-title">Loading...</h1></div>
-    
-    <div class="row"><h2>Trending Now</h2><div id="trending-row" class="scroller"></div></div>
-    <div class="row"><h2>Top Rated</h2><div id="top-rated-row" class="scroller"></div></div>
+    <nav id="nav" class="nav">
+        <a href="#" class="logo" onclick="location.reload()">MOVIETOWN</a>
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="Movies, TV shows..." onkeyup="handleSearch(event)">
+        </div>
+    </nav>
+
+    <div id="main-content">
+        <div id="hero" class="hero"><h1 id="hero-title" class="hero-title">Loading...</h1></div>
+        
+        <div class="row">
+            <div class="row-header">Top 10 Today</div>
+            <div id="ranking-row" class="scroller"></div>
+        </div>
+
+        <div class="row">
+            <div class="row-header">Trending Now</div>
+            <div id="trending-row" class="scroller"></div>
+        </div>
+
+        <div class="row">
+            <div class="row-header">Action Thrillers</div>
+            <div id="action-row" class="scroller"></div>
+        </div>
+
+        <div class="row">
+            <div class="row-header">Animation & Fun</div>
+            <div id="animation-row" class="scroller"></div>
+        </div>
+    </div>
+
+    <div id="search-view">
+        <h2 id="search-title" style="margin-bottom: 20px;">Search Results</h2>
+        <div id="search-results" class="grid"></div>
+    </div>
 
     <div id="modal">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <iframe id="player" width="90%" height="80%" src="" frameborder="0" allowfullscreen></iframe>
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <iframe id="player" width="100%" height="100%" src="" frameborder="0" allowfullscreen></iframe>
+        </div>
     </div>
 
     <script>
-        // --- YAHAN APNI TMDB KEY DALO ---
+        // --- APNI API KEY YAHAN DALO ---
         const API_KEY = "fd425ec0c76fd15b63572c439ee65db7"; 
         const BASE_URL = "https://api.themoviedb.org/3";
         const IMG_URL = "https://image.tmdb.org/t/p/original";
 
         async function initApp() {
             try {
-                // Fetch Hero
                 const res = await fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}`);
                 const data = await res.json();
-                const movie = data.results[0];
+                const movie = data.results[Math.floor(Math.random() * 5)];
+                
                 document.getElementById('hero').style.backgroundImage = `url(${IMG_URL}${movie.backdrop_path})`;
                 document.getElementById('hero-title').innerText = movie.title;
 
-                // Fetch Rows
+                loadRanking();
                 loadRow("trending-row", `${BASE_URL}/trending/movie/week?api_key=${API_KEY}`);
-                loadRow("top-rated-row", `${BASE_URL}/movie/top_rated?api_key=${API_KEY}`);
-            } catch (err) { console.error("Error:", err); }
+                loadRow("action-row", `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=28`);
+                loadRow("animation-row", `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=16`);
+            } catch (err) { console.error(err); }
         }
 
         async function loadRow(id, url) {
@@ -72,19 +120,48 @@
             const data = await res.json();
             document.getElementById(id).innerHTML = data.results.map(m => `
                 <div class="movie-card" onclick="openTrailer(${m.id})">
-                    <img class="poster" src="${IMG_URL}${m.poster_path}">
+                    <img class="poster" src="${IMG_URL}${m.poster_path}" alt="${m.title}">
                 </div>
             `).join('');
+        }
+
+        async function loadRanking() {
+            const res = await fetch(`${BASE_URL}/movie/top_rated?api_key=${API_KEY}`);
+            const data = await res.json();
+            document.getElementById('ranking-row').innerHTML = data.results.slice(0, 10).map((m, i) => `
+                <div class="rank-card" onclick="openTrailer(${m.id})">
+                    <div class="rank-num">${i + 1}</div>
+                    <img class="rank-img" src="${IMG_URL}${m.poster_path}">
+                </div>
+            `).join('');
+        }
+
+        async function handleSearch(e) {
+            const query = e.target.value;
+            if (query.length > 2) {
+                document.getElementById('main-content').style.display = 'none';
+                document.getElementById('search-view').style.display = 'block';
+                const res = await fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&query=${query}`);
+                const data = await res.json();
+                document.getElementById('search-results').innerHTML = data.results.map(m => `
+                    <div class="movie-card" onclick="openTrailer(${m.id})">
+                        <img class="poster" src="${m.poster_path ? IMG_URL + m.poster_path : 'https://via.placeholder.com/150x225?text=No+Image'}">
+                    </div>
+                `).join('');
+            } else if (query.length === 0) {
+                document.getElementById('main-content').style.display = 'block';
+                document.getElementById('search-view').style.display = 'none';
+            }
         }
 
         async function openTrailer(id) {
             const res = await fetch(`${BASE_URL}/movie/${id}/videos?api_key=${API_KEY}`);
             const data = await res.json();
-            const trailer = data.results.find(v => v.type === 'Trailer');
+            const trailer = data.results.find(v => v.type === 'Trailer' || v.site === 'YouTube');
             if(trailer) {
                 document.getElementById('modal').style.display = 'flex';
                 document.getElementById('player').src = `https://www.youtube.com/embed/${trailer.key}?autoplay=1`;
-            } else { alert("Trailer available nahi hai."); }
+            } else { alert("Trailer is currently not available."); }
         }
 
         function closeModal() {
@@ -92,10 +169,10 @@
             document.getElementById('player').src = "";
         }
 
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 100) document.getElementById('nav').classList.add('black');
+        window.onscroll = () => {
+            if (window.scrollY > 50) document.getElementById('nav').classList.add('black');
             else document.getElementById('nav').classList.remove('black');
-        });
+        };
 
         initApp();
     </script>
